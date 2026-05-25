@@ -23,6 +23,12 @@ enum Commands {
         #[arg(short, long, default_value = "bundle.zsts.zip")]
         output: PathBuf,
     },
+    /// 安装一个打包完成的zst包组
+    Install {
+        /// 要安装的包的路径
+        #[arg(required = true)]
+        packages: PathBuf
+    },
 }
 
 fn main() -> Result<()> {
@@ -31,6 +37,9 @@ fn main() -> Result<()> {
     match cli.command {
         Commands::Bundle { packages, output } => {
             bundle_packages(&packages, &output)?;
+        }
+        Commands::Install { packages } => {
+            install_zsts(&packages )?;
         }
     }
 
@@ -65,6 +74,33 @@ fn bundle_packages(packages: &[String], output: &PathBuf) -> Result<()> {
     let _ = pacman.status()?;
     let _ = zip.status()?;
     println!("打包成功！");
+
+    Ok(())
+}
+
+fn install_zsts(packages: &PathBuf) -> Result<()>{
+    println!("开始安装: {:?}", packages);
+
+    let temp_dir = TempDir::new()?;
+    let tmp_path = temp_dir.path();
+
+    println!("tmppath:{}\n",tmp_path.display());
+
+    let mut unzip = Command::new("unzip");
+    unzip.arg(packages)
+    .arg("-d")
+    .arg(tmp_path);
+
+    let mut pacman = Command::new("sudo");
+    pacman.arg("find")
+    .arg(tmp_path)
+    .arg("-maxdepth").arg("1")
+    .arg("-name").arg("*.pkg.tar.zst")
+    .arg("-exec").arg("pacman").arg("-U").arg("{}").arg("+");
+
+    let _ = unzip.status()?;
+    let _ = pacman.status()?;
+    println!("安装完成！");
 
     Ok(())
 }
