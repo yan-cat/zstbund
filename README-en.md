@@ -15,9 +15,8 @@ Note: Using zstbund to bundle packages **does not** install any software on your
 
 When you want to install software on a **fully offline** Arch Linux machine:
 
-- `pacman -Spw` only downloads packages, **without GPG keys** → offline verification fails
-- Manually resolving the dependency chain? Too much hassle
-- Downloading packages one by one and transferring them to the offline machine? Possible, but still requires manual packaging
+- `pacman -Spw` only downloads packages, **without GPG keys** → offline verification fails  
+- Manually completing the dependency chain? Super troublesome
 
 **zstbund** = automatic dependency resolution + bundling all packages + collecting required GPG keys → produces a single zip file. Take it anywhere, you can either extract and install manually or let it install automatically:
 ```bash
