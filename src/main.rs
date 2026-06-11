@@ -1,8 +1,9 @@
 use clap::{Parser, Subcommand};
 use std::{path::PathBuf};
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use std::process::Command;
 use tempfile::TempDir;
+
 
 #[derive(Parser)]
 #[command(name = "zstbund")]
@@ -46,6 +47,14 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+fn run_cmd(mut cmd: std::process::Command, name: &str) -> Result<()> {
+    match cmd.status() {
+        Ok(status) if status.success() => Ok(()),
+        Ok(status) => Err(anyhow!("{} 执行失败，退出码：{:?}", name, status.code())),
+        Err(e) => Err(anyhow!("无法启动 {}：{}", name, e)),
+    }
+}
+
 fn bundle_packages(packages: &[String], output: &PathBuf) -> Result<()> {
     if output == "bundle.zip" {
         println!("您似乎没有指定输出文件，默认输出为运行目录下的bundle.zsts.zip");
@@ -71,8 +80,8 @@ fn bundle_packages(packages: &[String], output: &PathBuf) -> Result<()> {
     .arg(output)
     .arg(tmp_path);
 
-    let _ = pacman.status()?;
-    let _ = zip.status()?;
+    run_cmd(pacman, "pacman 下载")?;
+    run_cmd(zip, "zip 打包")?;
     println!("打包成功！");
 
     Ok(())
@@ -100,6 +109,8 @@ fn install_zsts(packages: &PathBuf) -> Result<()>{
 
     let _ = unzip.status()?;
     let _ = pacman.status()?;
+    run_cmd(unzip, "zip 解压")?;
+    run_cmd(pacman, "pacman 安装")?;
     println!("安装完成！");
 
     Ok(())
